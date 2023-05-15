@@ -2,6 +2,8 @@ name: Docker Build & Push
 on:
   push:
   workflow_dispatch:
+  tags:
+      - "v*.*"
 jobs:
  build-and-push:
    runs-on: ubuntu-latest
@@ -20,10 +22,23 @@ jobs:
        name: Set up Docker Buildx
        uses: docker/setup-buildx-action@v2
      -
+      name: Collecting tag name info
+      uses: docker/metadata-action@v4
+      with: 
+       images: |
+         cobraking1/catgif
+       tags: |
+         type=ref,event=branch
+         type=semver,pattern={{major}}.{{minor}}
+         type=semver,pattern={{major}}
+
+     -
        name: Build and push
        uses: docker/build-push-action@v4
        with:
         context: .
         file: ./Dockerfile
         push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/cobraking1:latest
+        tags: |
+          ${{ secrets.DOCKER_USERNAME }}/cobraking1:latest
+          ${{ steps.meta.outputs.tags }}
